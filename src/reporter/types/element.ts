@@ -9,7 +9,7 @@ export interface Element {
   variant?: string;
   options?: unknown;
 
-  reportDefinitions: (prefix: string) => { model: Array<Step>; dataset: Array<DatasetDefinition> };
+  reportDefinitions?: (prefix: string) => { model: Array<Step>; dataset: Array<DatasetDefinition> };
   elementKey: string;
 }
 
@@ -35,6 +35,30 @@ interface ChartOptions extends SourceDefinition {
   group?: Partial<StepGroup>;
 }
 
+interface TextOptions {
+  rich: boolean;
+  multiline: boolean;
+}
+
+export class ElementText implements Element {
+  public name = ''
+  public description = ''
+  public kind = ''
+  public options?: Array<TextOptions>
+  value = 'Sample text...'
+
+  constructor (p: ElementText) {
+    Apply(this, p, String, 'name', 'description', 'kind', 'value')
+
+    this.kind = 'Text'
+    this.options = p.options
+  }
+
+  get elementKey (): string {
+    return `[${this.name}]`
+  }
+}
+
 export class ElementChart implements Element {
   public name = ''
   public description = ''
@@ -44,7 +68,7 @@ export class ElementChart implements Element {
   constructor (p: ElementChart) {
     Apply(this, p, String, 'name', 'description', 'kind')
 
-    this.kind = 'chart'
+    this.kind = 'Chart'
     this.options = p.options
   }
 
@@ -174,7 +198,7 @@ export class ElementTable implements Element {
   constructor (p: Partial<ElementTable>) {
     Apply(this, p, String, 'name', 'description', 'kind', 'variant')
 
-    this.kind = 'table'
+    this.kind = 'Table'
     this.options = p.options
   }
 
@@ -320,13 +344,19 @@ export class ElementTable implements Element {
 export class ElementFactory {
   public static Make (e: Partial<Element>): Element {
     switch (e.kind) {
-      case 'table':
+      case 'Text':
+        return ElementFactory.MakeText(e as ElementText)
+      case 'Table':
         return ElementFactory.MakeTable(e as ElementTable)
-      case 'chart':
+      case 'Chart':
         return ElementFactory.MakeChart(e as ElementChart)
       default:
         throw new Error('unknown display element: ' + e.kind)
     }
+  }
+
+  public static MakeText (e: ElementText): ElementText {
+    return new ElementText(e)
   }
 
   public static MakeTable (e: ElementTable): ElementTable {
